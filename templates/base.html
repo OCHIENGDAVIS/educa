@@ -9,11 +9,13 @@
 </head>
 <body>
 <div class="header">
-    <a href="/">Educa</a>
+    <a href="{% url 'manage_course_list' %}">Educa</a>
     <ul class="menu">
         {% if request.user.is_authenticated %}
             <li>
-                <a href="{% url 'logout' %}">Sign Out</a>
+                <form method="POST" action="{% url 'logout' %}"> {% csrf_token %}
+                    <button type="submit"> sign Out</button>
+                </form>
             </li>
         {% else %}
             <li>
