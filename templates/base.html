@@ -28,9 +28,22 @@
     {% block content %}
     {% endblock %}
 </div>
+{% block include_js %}
+    <script src="https://cdn.jsdelivr.net/npm/html5-sortable@1.0.2/sortable.min.js">
+    </script>
+{% endblock %}
 <script>
     document.addEventListener('DOMContentLoaded', (event) => {
         {% block domready %}
+            var options = {
+                method: 'POST',
+                mode: 'same-origin'
+            }
+            const moduleOrderUrl = '{% url 'module_order' %}'
+            sorttable('#modules', {
+                forcePlaceholderSize: true,
+                placeholderClass: 'placeholder'
+            });
         {% endblock %}
     })
 </script>
