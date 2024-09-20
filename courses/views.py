@@ -1,15 +1,18 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.generic.list import ListView
+from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.views.generic.base import TemplateResponseMixin, View
 from django.apps import apps
 from django.forms.models import modelform_factory
+from django.db.models import Count
 
 from braces.views import CsrfExemptMixin, JSONRequestResponseMixin
 
-from .models import Course, Module, Content
+from students.forms import CourseEnrollForm
+from .models import Course, Module, Content, Subject
 from .forms import ModuleFormSet
 
 
@@ -177,3 +180,64 @@ class ContentOrderView(CsrfExemptMixin, JSONRequestResponseMixin, View):
             ).update(order=order)
 
         return self.render_json_response({'saved': 'ok'})
+
+
+class CourseListView(TemplateResponseMixin, View):
+    model = Course
+    template_name = 'courses/course/list.html'
+
+    def get(self, request, subject=None):
+        subjects = Subject.objects.annotate(
+            total_courses=Count('courses_created')
+        )
+        courses = Course.objects.annotate(
+            total_modules=Count('modules')
+        )
+        if subject:
+            subject = get_object_or_404(Subject, slug=subject)
+            courses = courses.filter(subject=subject)
+        return self.render_to_response({
+            'subjects': subjects,
+            'subject': subject,
+            'courses': courses
+        })
+
+
+class CourseDetailView(DeleteView):
+    model = Course
+    template_name = 'courses/course/detail.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['enroll_form'] = CourseEnrollForm(
+            initial={'course': self.object}
+        )
+        return context
+
+
+class StudentCourseListview(LoginRequiredMixin, ListView):
+    model = Course
+    template_name = 'students/student/course_list.html'
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        return qs.filter(students__in=[self.request.user])
+
+
+class StudentCourseDetailView(DetailView):
+    model = Course
+    template_name = 'students/student/course_detail.html'
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        return qs.filter(students__in=[self.request.user])
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        course = self.get_object()
+        if 'module_id' in self.kwargs:
+            context['module'] = course.modeles.get(id=self.kwargs['module_id'])
+        else:
+            context['module'] = course.modeles.all()[0]
+
+        return context
