@@ -40,7 +40,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'embed_video',
     'rest_framework',
+    'channels',
     'students.apps.StudentsConfig',
+    'chat.apps.ChatConfig',
 ]
 
 MIDDLEWARE = [
@@ -128,8 +130,12 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOGIN_REDIRECT_URL = 'manage_course_list'
 
+# rest framewrk settings
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
     ]
 }
+
+# channes setting
+ASGI_APPLICATION = 'educa.routing.application'  # used bu=y channels to locate  root routing configuration.
